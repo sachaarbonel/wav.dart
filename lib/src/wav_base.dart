@@ -1,12 +1,9 @@
-
 import 'dart:io';
 
 enum WavFormat { WAVE }
 enum Encoding { PCM }
 
 class WavReader {
-  RandomAccessFile _data;
-
   final String chunkID;
   final int chunkSize;
   //final WavFormat format;

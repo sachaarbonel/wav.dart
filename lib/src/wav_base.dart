@@ -1,7 +1,8 @@
 import 'dart:io';
 
-enum WavFormat { WAVE }
-enum Encoding { PCM }
+enum WavFormat { WAVE, OTHER }
+enum Encoding { PCM, OTHER }
+enum System { MONO, STEREO }
 
 /// Returns the lesser of two numbers.
 ///
@@ -33,12 +34,12 @@ enum Encoding { PCM }
 class WavReader {
   final String chunkID;
   final int chunkSize;
-  //final WavFormat format;
-  final String format;
+  final WavFormat format;
+  final String rawFormat;
   final String subChunk1ID;
   final int subChunk1Size;
-  final int encoding;
-  // final Encoding encoding;
+  final int rawEncoding;
+  final Encoding encoding;
   final int numChannels;
   final int sampleRate;
   final int blockAlign;
@@ -48,14 +49,18 @@ class WavReader {
   final double bytesPerSample;
   final int sampleCount;
   final double audioLength;
+  final System system;
   WavReader._(
       {this.chunkID,
       this.chunkSize,
       this.format,
+      this.rawFormat,
       this.subChunk1ID,
       this.subChunk1Size,
       this.encoding,
+      this.rawEncoding,
       this.numChannels,
+      this.system,
       this.sampleRate,
       this.blockAlign,
       this.bitsPerSample,
@@ -73,8 +78,8 @@ class WavReader {
     final chunkSize = chunkSizeBytes.buffer.asByteData().getInt8(0);
     // print(chunkSize);
     final formatBytes = await data.read(4);
-    final format = String.fromCharCodes(formatBytes);
-    assert(format == 'WAVE');
+    final formatStr = String.fromCharCodes(formatBytes);
+    assert(formatStr == 'WAVE');
     final subChunk1IDBytes = await data.read(4);
     final subChunk1ID = String.fromCharCodes(subChunk1IDBytes);
     assert(subChunk1ID == 'fmt ');
@@ -82,7 +87,7 @@ class WavReader {
     final subChunk1Size = subChunk1SizeBytes.buffer.asByteData().getInt8(0);
     //print(subChunk1Size);
     final encodingBytes = await data.read(2);
-    final encoding = encodingBytes.buffer.asByteData().getInt8(0);
+    final encodingInt = encodingBytes.buffer.asByteData().getInt8(0);
     //  print(encoding); //assert 1 == PCM Format: assumed PCM
 
     final numChannelsBytes = await data.read(2);
@@ -123,7 +128,7 @@ class WavReader {
       samples.add(bytes.buffer.asByteData().getInt8(0));
     }
     assert(chunkSize ==
-            format.length +
+            formatStr.length +
                 subChunk1ID.length +
                 subChunk1Size +
                 4 + //Full size of subchunk 1
@@ -149,10 +154,13 @@ class WavReader {
     return WavReader._(
         chunkID: chunkID,
         chunkSize: chunkSize,
-        format: format,
+        format: getFormat(formatStr),
+        rawFormat: formatStr,
         subChunk1ID: subChunk1ID,
         subChunk1Size: subChunk1Size,
-        encoding: encoding,
+        encoding: getEncoding(encodingInt),
+        rawEncoding: encodingInt,
+        system: getSystem(numChannels),
         numChannels: numChannels,
         sampleRate: sampleRate,
         blockAlign: blockAlign,
@@ -162,5 +170,38 @@ class WavReader {
         bytesPerSample: bytesPerSample,
         sampleCount: sampleCount,
         audioLength: audioLength);
+  }
+
+  static WavFormat getFormat(String formatStr) {
+    switch (formatStr) {
+      case 'WAVE':
+        return WavFormat.WAVE;
+        break;
+      default:
+        return WavFormat.OTHER;
+    }
+  }
+
+  static Encoding getEncoding(int encodingInt) {
+    switch (encodingInt) {
+      case 1:
+        return Encoding.PCM;
+        break;
+      default:
+        return Encoding.OTHER;
+    }
+  }
+
+  static System getSystem(int numChannels) {
+    switch (numChannels) {
+      case 1:
+        return System.MONO;
+        break;
+      case 2:
+        return System.STEREO;
+        break;
+      default:
+        return System.MONO;
+    }
   }
 }

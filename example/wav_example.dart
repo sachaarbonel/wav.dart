@@ -2,16 +2,15 @@ import 'dart:io';
 
 import 'package:wav/wav.dart';
 
-main() async {
-  final wav = await WavReader.open(file: File('oishii.wav'));
+void main() async {
+  final wav = WavReader();
+  await wav.open(file: File('oishii.wav'));
   print(wav.chunkID);
   print(wav.chunkSize);
-  //final WavFormat format;
   print(wav.format);
   print(wav.subChunk1ID);
   print(wav.subChunk1Size);
   print(wav.encoding);
-  // final Encoding encoding;
   print(wav.numChannels);
   print(wav.sampleRate);
   print(wav.blockAlign);
@@ -21,4 +20,5 @@ main() async {
   print(wav.bytesPerSample);
   print(wav.sampleCount);
   print(wav.audioLength);
+  print(wav.readSamples());
 }

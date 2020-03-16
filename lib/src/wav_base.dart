@@ -57,20 +57,20 @@ class WavReader {
 
   List<int> readSamples() => _samples;
 
-  void open({File file}) async {
-    final data = await file.open();
+  void open({String path}) async {
+    final data = await File(path).open();
     final chunkIDBytes = await data.read(4);
     chunkID = String.fromCharCodes(chunkIDBytes);
-    assert(chunkID == 'RIFF');
+    // assert(chunkID == 'RIFF');
     final chunkSizeBytes = await data.read(4);
     chunkSize = chunkSizeBytes.buffer.asByteData().getInt8(0);
     final formatBytes = await data.read(4);
     final formatStr = String.fromCharCodes(formatBytes);
-    assert(formatStr == 'WAVE');
+    // assert(formatStr == 'WAVE');
     format = getFormat(formatStr);
     final subChunk1IDBytes = await data.read(4);
     subChunk1ID = String.fromCharCodes(subChunk1IDBytes);
-    assert(subChunk1ID == 'fmt ');
+    // assert(subChunk1ID == 'fmt ');
     final subChunk1SizeBytes = await data.read(4);
     subChunk1Size = subChunk1SizeBytes.buffer.asByteData().getInt8(0);
     final encodingBytes = await data.read(2);
@@ -97,39 +97,39 @@ class WavReader {
 
     var subChunk2IDBytes = await data.read(4);
     subChunk2ID = String.fromCharCodes(subChunk2IDBytes);
-    assert(subChunk2ID == 'data');
+    // assert(subChunk2ID == 'data');
 
     final subChunk2SizeBytes = await data.read(4);
     subChunk2Size = subChunk2SizeBytes.buffer.asByteData().getInt8(0);
     bytesPerSample = bitsPerSample / 8;
-    assert(subChunk2Size % bytesPerSample == 0);
+    // assert(subChunk2Size % bytesPerSample == 0);
     sampleCount = (subChunk2Size / bytesPerSample).round();
     for (var i = 0; i < sampleCount; i++) {
       var bytes = await data.read(2);
       _samples.add(bytes.buffer.asByteData().getInt8(0));
     }
-    assert(chunkSize ==
-            formatStr.length +
-                subChunk1ID.length +
-                subChunk1Size +
-                4 + //Full size of subchunk 1
-                subChunk2ID.length +
-                subChunk2Size +
-                4 //Full size of subchunk 2
+    // assert(chunkSize ==
+    //         formatStr.length +
+    //             subChunk1ID.length +
+    //             subChunk1Size +
+    //             4 + //Full size of subchunk 1
+    //             subChunk2ID.length +
+    //             subChunk2Size +
+    //             4 //Full size of subchunk 2
 
-        );
-    assert(subChunk1Size ==
-            2 + // audio_format
-                2 + // num_channels
-                4 + // sample_rate
-                4 + // byte_rate
-                2 + // block_align
-                2 // bits_per_sample
-        );
+    //     );
+    // assert(subChunk1Size ==
+    //         2 + // audio_format
+    //             2 + // num_channels
+    //             4 + // sample_rate
+    //             4 + // byte_rate
+    //             2 + // block_align
+    //             2 // bits_per_sample
+    //     );
 
-    assert(byteRate == sampleRate * numChannels * bytesPerSample);
-    assert(blockAlign == numChannels * bytesPerSample);
-    assert(subChunk2Size == _samples.length * bytesPerSample);
+    // assert(byteRate == sampleRate * numChannels * bytesPerSample);
+    // assert(blockAlign == numChannels * bytesPerSample);
+    // assert(subChunk2Size == _samples.length * bytesPerSample);
     audioLength = (_samples.length / sampleRate);
   }
 
